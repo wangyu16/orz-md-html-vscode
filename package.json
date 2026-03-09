@@ -1,0 +1,127 @@
+{
+  "name": "orz-md-vscode",
+  "displayName": "Orz Markdown",
+  "description": "VS Code extension editing and previewing files with dual extension names '*.md.html'",
+  "version": "0.1.0",
+  "publisher": "wangyu",
+  "repository": "https://github.com/wangyu16/orz-markdown",
+  "icon": "media/icon.png",
+  "engines": {
+    "vscode": "^1.109.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/*.md.html",
+    "onLanguage:mdhtml",
+    "onFileSystem:mdhtml"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "mdhtml",
+        "aliases": [
+          "Orz Markdown",
+          "mdhtml"
+        ],
+        "extensions": [
+          ".md.html"
+        ],
+        "icon": {
+          "light": "media/icon.png",
+          "dark": "media/icon.png"
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "orz-md.openPreview",
+        "title": "Open Preview",
+        "category": "Orz Markdown",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "orz-md.selectTheme",
+        "title": "Select Theme",
+        "category": "Orz Markdown",
+        "icon": "$(symbol-color)"
+      },
+      {
+        "command": "orz-md.fontLarger",
+        "title": "Increase Font Size",
+        "category": "Orz Markdown",
+        "icon": {
+          "light": "media/icon-font-larger.svg",
+          "dark": "media/icon-font-larger-dark.svg"
+        }
+      },
+      {
+        "command": "orz-md.fontSmaller",
+        "title": "Decrease Font Size",
+        "category": "Orz Markdown",
+        "icon": {
+          "light": "media/icon-font-smaller.svg",
+          "dark": "media/icon-font-smaller-dark.svg"
+        }
+      },
+      {
+        "command": "orz-md.newFile",
+        "title": "New File",
+        "category": "Orz Markdown"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "orz-md.newFile",
+          "when": "true"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "orz-md.newFile",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "orz-md.openPreview",
+          "when": "resourceScheme == mdhtml",
+          "group": "navigation"
+        },
+        {
+          "command": "orz-md.fontSmaller",
+          "when": "resourceScheme == mdhtml",
+          "group": "navigation"
+        },
+        {
+          "command": "orz-md.fontLarger",
+          "when": "resourceScheme == mdhtml",
+          "group": "navigation"
+        },
+        {
+          "command": "orz-md.selectTheme",
+          "when": "resourceScheme == mdhtml",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "package": "node esbuild.mjs --production",
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.5",
+    "@types/vscode": "^1.109.0",
+    "@vscode/vsce": "^3.7.1",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@orz-how/markdown-parser": "github:wangyu16/orz-markdown#da400d60c78d1fca935f58aab4d508c21a2c3722",
+    "orz-markdown": "git+https://github.com/wangyu16/orz-markdown.git#da400d60c78d1fca935f58aab4d508c21a2c3722"
+  }
+}
