@@ -121,7 +121,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@orz-how/markdown-parser": "github:wangyu16/orz-markdown",
+    "@orz-how/markdown-parser": "github:wangyu16/orz-markdown#main",
     "orz-markdown": "github:wangyu16/orz-markdown"
   }
 }
