@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { ThemeManager } from './ThemeManager';
 import { renderForPreview, renderMarkdownHtml } from './Renderer';
 import { debounce } from './util/debounce';
@@ -17,6 +18,11 @@ export class PreviewPanel {
         if (existingPanel) {
             this._panel = existingPanel;
         } else {
+            const docFolder = vscode.Uri.file(path.dirname(realPath));
+            const roots: vscode.Uri[] = [vscode.Uri.file(ctx.extensionPath), docFolder];
+            for (const wf of vscode.workspace.workspaceFolders ?? []) {
+                roots.push(wf.uri);
+            }
             this._panel = vscode.window.createWebviewPanel(
                 PreviewPanel.viewType,
                 'orz-md Preview',
@@ -24,7 +30,7 @@ export class PreviewPanel {
                 {
                     enableScripts: true,
                     retainContextWhenHidden: true,
-                    localResourceRoots: [vscode.Uri.file(ctx.extensionPath)]
+                    localResourceRoots: roots
                 }
             );
         }
@@ -50,8 +56,18 @@ export class PreviewPanel {
         return this._panel.webview.asWebviewUri(vscode.Uri.file(this.ctx.extensionPath + '/media/vendor')).toString();
     }
 
+    private _toWebviewUri(src: string): string {
+        if (!src || /^(https?:|data:|vscode-webview:|#)/.test(src)) { return src; }
+        try {
+            const base = path.dirname(this.realPath);
+            const abs = path.isAbsolute(src) ? src : path.join(base, src);
+            return this._panel.webview.asWebviewUri(vscode.Uri.file(abs)).toString();
+        } catch { return src; }
+    }
+
     private async _getHtmlForWebview(markdown: string): Promise<string> {
-        return renderForPreview(markdown, this.themeManager, this._vendorBaseUri(), this.realPath);
+        return renderForPreview(markdown, this.themeManager, this._vendorBaseUri(), this.realPath,
+            src => this._toWebviewUri(src));
     }
 
     private _updateDebounced = debounce(async (markdown: string) => {
@@ -65,7 +81,9 @@ export class PreviewPanel {
             this._panel.webview.html = await this._getHtmlForWebview(markdown);
         } else {
             // Content-only change — patch the DOM via postMessage to preserve scroll position
-            const html = await renderMarkdownHtml(markdown);
+            let html = await renderMarkdownHtml(markdown);
+            html = html.replace(/(<img\b[^>]*?\bsrc=")([^"]*?)(")/gi,
+                (_, pre, src, post) => pre + this._toWebviewUri(src) + post);
             this._panel.webview.postMessage({ type: 'update', html });
         }
     }, 400);

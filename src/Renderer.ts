@@ -456,12 +456,17 @@ export async function renderForPreview(
     markdown: string,
     themeManager: ThemeManager,
     vendorBaseUri: string,
-    filePath?: string
+    filePath?: string,
+    rewriteUri?: (src: string) => string
 ): Promise<string> {
     const theme = themeManager.activeTheme;
     const fontScale = themeManager.fontScale;
     const css = themeManager.loadThemeCss();
-    const mdHtml = await renderMarkdownHtml(markdown);
+    let mdHtml = await renderMarkdownHtml(markdown);
+    if (rewriteUri) {
+        mdHtml = mdHtml.replace(/(<img\b[^>]*?\bsrc=")([^"]*?)(")/gi,
+            (_, pre, src, post) => pre + rewriteUri(src) + post);
+    }
 
     return `<!DOCTYPE html>
 <html lang="en" data-ui-scheme="${theme.colorScheme}">
