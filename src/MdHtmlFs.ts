@@ -49,7 +49,7 @@ export class MdHtmlFs implements vscode.FileSystemProvider {
         throw vscode.FileSystemError.NoPermissions();
     }
 
-    readFile(uri: vscode.Uri): Uint8Array {
+    async readFile(uri: vscode.Uri): Promise<Uint8Array> {
         const realPath = uri.fsPath;
 
         let content = '';
@@ -61,7 +61,7 @@ export class MdHtmlFs implements vscode.FileSystemProvider {
 
         // Auto-initialize: empty or whitespace file
         if (!content.trim()) {
-            const skeletonHtml = renderForOutput('', this.themeManager, realPath);
+            const skeletonHtml = await renderForOutput('', this.themeManager, realPath);
             fs.writeFileSync(realPath, skeletonHtml, 'utf8');
             return new Uint8Array(0); // empty markdown buffer
         }
@@ -78,18 +78,17 @@ export class MdHtmlFs implements vscode.FileSystemProvider {
         return Buffer.from(mdSource, 'utf8');
     }
 
-    writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean }): void {
+    async writeFile(uri: vscode.Uri, content: Uint8Array, options: { create: boolean; overwrite: boolean }): Promise<void> {
         const realPath = uri.fsPath;
         const mdSource = Buffer.from(content).toString('utf8');
 
-        let exisitingHtml = '';
         try {
-            exisitingHtml = fs.readFileSync(realPath, 'utf8');
+            fs.readFileSync(realPath, 'utf8');
         } catch {
             // New file cases handled primarily by 'new file' command. Render empty stub if need be.
         }
 
-        const html = renderForOutput(mdSource, this.themeManager, realPath);
+        const html = await renderForOutput(mdSource, this.themeManager, realPath);
         fs.writeFileSync(realPath, html, 'utf8');
         this._emitter.fire([{ type: vscode.FileChangeType.Changed, uri }]);
     }

@@ -32,7 +32,7 @@ export class PreviewPanel {
         this._panel.title = `Preview ${vscode.Uri.file(realPath).fsPath.split(/[\\/]/).pop()}`;
 
         // Persist real path to state for view restore
-        this._panel.webview.html = this._getHtmlForWebview('');
+        this._getHtmlForWebview('').then(html => { this._panel.webview.html = html; });
 
         // Wire Theme and font scale changes — both trigger a full re-render
         this.themeManager.onThemeChanged(() => this.update(this._lastKnownMarkdown));
@@ -50,11 +50,11 @@ export class PreviewPanel {
         return this._panel.webview.asWebviewUri(vscode.Uri.file(this.ctx.extensionPath + '/media/vendor')).toString();
     }
 
-    private _getHtmlForWebview(markdown: string) {
+    private async _getHtmlForWebview(markdown: string): Promise<string> {
         return renderForPreview(markdown, this.themeManager, this._vendorBaseUri(), this.realPath);
     }
 
-    private _updateDebounced = debounce((markdown: string) => {
+    private _updateDebounced = debounce(async (markdown: string) => {
         this._lastKnownMarkdown = markdown;
         const themeStyleId = this.themeManager.activeTheme.styleId;
         const fontScale = this.themeManager.fontScale;
@@ -62,10 +62,10 @@ export class PreviewPanel {
             // Theme or font scale changed — full reload required to update embedded CSS
             this._lastThemeStyleId = themeStyleId;
             this._lastFontScale = fontScale;
-            this._panel.webview.html = this._getHtmlForWebview(markdown);
+            this._panel.webview.html = await this._getHtmlForWebview(markdown);
         } else {
             // Content-only change — patch the DOM via postMessage to preserve scroll position
-            const html = renderMarkdownHtml(markdown, this.realPath);
+            const html = await renderMarkdownHtml(markdown);
             this._panel.webview.postMessage({ type: 'update', html });
         }
     }, 400);

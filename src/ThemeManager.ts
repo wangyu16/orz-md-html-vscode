@@ -5,7 +5,7 @@ import * as path from 'path';
 export type ThemeDefinition = {
     styleId: string;
     name: string;
-    file: string;             // CSS filename relative to themes/ in orz-markdown package
+    file: string;             // CSS filename relative to themes/ directory
     colorScheme: 'dark' | 'light';
     mermaidTheme: 'dark' | 'default';
     smilesTheme: 'dark' | 'light';
@@ -67,7 +67,12 @@ export class ThemeManager {
 
     loadThemeCss(): string {
         try {
-            const themePath = path.join(this.ctx.extensionPath, 'out', 'themes', this.activeTheme.file);
+            const ext = vscode.extensions.getExtension('yuwang26.orz-md-preview');
+            if (!ext) {
+                console.error('orz-md-preview extension not found, cannot load theme CSS');
+                return '/* theme load error: orz-md-preview not installed */';
+            }
+            const themePath = path.join(ext.extensionPath, 'out', 'themes', this.activeTheme.file);
             return fs.readFileSync(themePath, 'utf-8');
         } catch (e) {
             console.error('Failed to load theme CSS', e);

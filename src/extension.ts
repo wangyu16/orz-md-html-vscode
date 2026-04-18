@@ -23,6 +23,17 @@ export function activate(context: vscode.ExtensionContext) {
     const sessionManager = new SessionManager(context, themeManager, mdHtmlFs);
     context.subscriptions.push({ dispose: () => sessionManager.dispose() });
 
+    // Paths intentionally opened as raw HTML — bypass the virtual-editor interception once.
+    const rawViewPaths = new Set<string>();
+
+    // Track whether the active editor is a raw .md.html file, for the toggleSource button when-clause.
+    context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor((editor) => {
+        const isRaw = !!editor &&
+            editor.document.uri.scheme === 'file' &&
+            editor.document.uri.fsPath.endsWith('.md.html');
+        vscode.commands.executeCommand('setContext', 'orz-md.rawSourceActive', isRaw);
+    }));
+
     // Handle initial interception to reroute standard vs code HTML file opening to virtual split editing
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(async (doc) => {
         if (!doc.fileName.endsWith('.md.html')) return;
@@ -43,6 +54,12 @@ export function activate(context: vscode.ExtensionContext) {
 
         // Ensure we bypass if opened inside extension's media dir
         if (doc.uri.fsPath.includes('media/vendor')) return;
+
+        // Bypass interception when the user explicitly requested the raw HTML view
+        if (rawViewPaths.has(doc.uri.fsPath)) {
+            rawViewPaths.delete(doc.uri.fsPath);
+            return;
+        }
 
         // Close HTML viewer right away, bring open our virtual URI system instead
         await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
@@ -76,6 +93,23 @@ export function activate(context: vscode.ExtensionContext) {
         const editor = vscode.window.activeTextEditor;
         if (!editor || editor.document.uri.scheme !== 'mdhtml') { return; }
         await sessionManager.reopenPreview(editor.document.uri.fsPath);
+    }));
+
+    context.subscriptions.push(vscode.commands.registerCommand('orz-md.toggleSource', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) { return; }
+        const uri = editor.document.uri;
+
+        if (uri.scheme === 'mdhtml') {
+            // Currently in markdown view → open raw HTML source
+            const realUri = vscode.Uri.file(uri.fsPath);
+            rawViewPaths.add(uri.fsPath);
+            await vscode.window.showTextDocument(realUri, { viewColumn: vscode.ViewColumn.One, preview: false });
+        } else if (uri.scheme === 'file' && uri.fsPath.endsWith('.md.html')) {
+            // Currently in raw HTML view → switch back to markdown editor
+            await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+            await sessionManager.open(uri);
+        }
     }));
 
     context.subscriptions.push(vscode.commands.registerCommand('orz-md.newFile', async () => {

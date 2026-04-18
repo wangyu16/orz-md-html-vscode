@@ -1,11 +1,15 @@
 {
-  "name": "orz-md-vscode",
-  "displayName": "Orz Markdown",
+  "name": "orz-md-html",
+  "displayName": "Orz Markdown-HTML Editor",
   "description": "VS Code extension editing and previewing files with dual extension names '*.md.html'",
-  "version": "0.1.0",
-  "publisher": "wangyu",
-  "repository": "https://github.com/wangyu16/orz-markdown",
-  "icon": "media/icon.png",
+  "version": "1.0.0",
+  "publisher": "yuwang26",
+  "author": {
+    "name": "Yu Wang",
+    "email": "yuwang@orz.how"
+  },
+  "repository": "https://github.com/wangyu16/orz-md-html-vscode",
+  "icon": "assets/icon.png",
   "engines": {
     "vscode": "^1.109.0"
   },
@@ -67,6 +71,12 @@
         "command": "orz-md.newFile",
         "title": "New File",
         "category": "Orz Markdown"
+      },
+      {
+        "command": "orz-md.toggleSource",
+        "title": "Toggle Source View",
+        "category": "Orz Markdown",
+        "icon": "$(file-code)"
       }
     ],
     "menus": {
@@ -102,6 +112,16 @@
           "command": "orz-md.selectTheme",
           "when": "resourceScheme == mdhtml",
           "group": "navigation"
+        },
+        {
+          "command": "orz-md.toggleSource",
+          "when": "resourceScheme == mdhtml",
+          "group": "navigation"
+        },
+        {
+          "command": "orz-md.toggleSource",
+          "when": "orz-md.rawSourceActive",
+          "group": "navigation"
         }
       ]
     }
@@ -113,15 +133,14 @@
     "package": "node esbuild.mjs --production",
     "test": "node --test"
   },
+  "extensionDependencies": [
+    "yuwang26.orz-md-preview"
+  ],
   "devDependencies": {
     "@types/node": "^25.3.5",
     "@types/vscode": "^1.109.0",
     "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.20.0",
     "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "@orz-how/markdown-parser": "github:wangyu16/orz-markdown#main",
-    "orz-markdown": "github:wangyu16/orz-markdown"
   }
 }
